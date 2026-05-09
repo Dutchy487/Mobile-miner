@@ -1,0 +1,7 @@
+mobile-miner/
+├── package.json
+├── public/
+│   └── index.html
+└── src/
+    ├── index.js
+    └── App.jsx  ← paste the miner code here
