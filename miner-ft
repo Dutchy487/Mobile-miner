@@ -1,9 +1,0 @@
-mobile-miner/
-├── index.html        ← root level
-├── vite.config.js    ← root level
-├── package.json      ← root level
-├── .gitignore        ← root level
-├── README.md         ← root level
-└── src/
-    ├── main.jsx
-    └── App.jsx       ← the full miner
