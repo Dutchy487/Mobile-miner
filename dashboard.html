@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="theme-color" content="#07090f" />
+  <title>MobileMiner — Live Feed</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Barlow+Condensed:wght@400;600;700;800&display=swap" rel="stylesheet" />
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    :root{
+      --bg:#07090f;--bg2:#0c1220;--bg3:#111b2d;
+      --border:#1b3354;--border2:#25456e;
+      --accent:#00cfff;--green:#00ff9d;--warn:#ffaa00;--danger:#ff4455;
+      --text:#c0daf0;--dim:#3d6080;
+      --mono:'Share Tech Mono',monospace;
+      --display:'Barlow Condensed',sans-serif;
+    }
+    body{background:var(--bg);color:var(--text);font-family:var(--display);}
+    #root{min-height:100vh;}
+    .app{max-width:480px;margin:0 auto;padding-bottom:60px;}
+    .hdr{background:linear-gradient(180deg,#040609,var(--bg));border-bottom:1px solid var(--border);padding:16px 18px 12px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;}
+    .logo{font-family:var(--mono);font-size:12px;letter-spacing:3px;color:var(--accent);text-transform:uppercase;}
+    .logo em{color:var(--green);font-style:normal;}
+    .live-dot{display:flex;align-items:center;gap:6px;font-family:var(--mono);font-size:10px;color:var(--dim);}
+    .dot{width:7px;height:7px;border-radius:50%;background:var(--dim);}
+    .dot.on{background:var(--green);box-shadow:0 0 8px var(--green);animation:blink 1.4s infinite;}
+    @keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+
+    .sec{margin:14px 14px 0;background:var(--bg2);border:1px solid var(--border);border-radius:6px;overflow:hidden;}
+    .sec-hdr{background:var(--bg3);border-bottom:1px solid var(--border);padding:9px 14px;font-size:10px;letter-spacing:2px;color:var(--accent);text-transform:uppercase;font-family:var(--mono);display:flex;align-items:center;gap:8px;}
+    .sec-hdr::before{content:'';width:3px;height:11px;background:var(--accent);border-radius:2px;flex-shrink:0;}
+    .sec-body{padding:14px;}
+
+    .addr-box{background:var(--bg3);border:1px solid var(--border);border-radius:5px;padding:11px 13px;font-family:var(--mono);font-size:11px;word-break:break-all;color:var(--text);line-height:1.6;}
+    .row-btns{display:flex;gap:8px;margin-top:10px;}
+    .mini-btn{flex:1;padding:10px;border-radius:4px;border:1px solid var(--border);background:var(--bg3);color:var(--accent);font-family:var(--mono);font-size:11px;letter-spacing:.5px;text-align:center;text-decoration:none;cursor:pointer;transition:all .15s;}
+    .mini-btn:active{background:rgba(0,207,255,.1);border-color:var(--accent);}
+    .mini-btn.copied{color:var(--green);border-color:var(--green);}
+
+    .stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px;}
+    .stat-box{background:var(--bg3);border:1px solid var(--border);border-radius:4px;padding:12px 12px;}
+    .stat-lbl{font-size:9px;letter-spacing:1.5px;color:var(--dim);font-family:var(--mono);margin-bottom:4px;text-transform:uppercase;}
+    .stat-val{font-size:22px;font-weight:800;font-family:var(--mono);}
+    .stat-sub{font-size:10px;color:var(--dim);font-family:var(--mono);margin-top:2px;}
+    .c-blue{color:var(--accent)} .c-green{color:var(--green)} .c-warn{color:var(--warn)} .c-text{color:var(--text)}
+
+    .pending-big{text-align:center;padding:6px 0 4px;}
+    .pending-num{font-size:30px;font-weight:800;font-family:var(--mono);color:var(--green);}
+    .pending-sub{font-size:11px;color:var(--dim);font-family:var(--mono);margin-top:2px;}
+
+    .feed-box{background:var(--bg);border:1px solid var(--border);border-radius:4px;height:160px;overflow-y:auto;padding:10px 12px;font-family:var(--mono);font-size:11px;}
+    .feed-box::-webkit-scrollbar{width:3px;}
+    .feed-box::-webkit-scrollbar-thumb{background:var(--border);}
+    .feed-entry{display:flex;gap:8px;margin-bottom:5px;}
+    .feed-time{color:var(--dim);flex-shrink:0;}
+    .fe-ok{color:var(--green);} .fe-err{color:var(--danger);} .fe-info{color:var(--text);}
+
+    .refresh-lbl{font-size:10px;color:var(--dim);font-family:var(--mono);text-align:center;margin-top:10px;letter-spacing:.5px;}
+
+    .empty-state{font-size:12px;color:var(--dim);font-family:var(--mono);text-align:center;padding:20px 10px;line-height:1.7;}
+    .empty-state a{color:var(--accent);}
+
+    .footer-links{padding:16px 14px 0;display:flex;flex-direction:column;gap:8px;}
+    .foot-link{display:block;padding:12px;border-radius:4px;text-align:center;font-family:var(--display);font-size:14px;font-weight:700;letter-spacing:.5px;text-decoration:none;border:1px solid var(--border);color:var(--dim);}
+    .foot-link.primary{background:linear-gradient(135deg,#00a865,#00ff9d);color:#040609;border:none;}
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+  <script type="text/babel">
+    const { useState, useEffect, useRef } = React;
+
+    const WALLET = "86zbf1gyvCiK12jxXuuVNYTH5R97JDSk6dvT3jwa5uxXbCkjzCWjfViY3YDQ8DWQpeXdL6rw8XnpEKyVc6zi67n7VXnhEYZ";
+    const API_URL = `https://api.moneroocean.stream/miner/${WALLET}/stats`;
+    const POOL_PAGE = `https://moneroocean.stream/?addr=${WALLET}`;
+    const WALLET_URI = `monero:${WALLET}`;
+
+    function fmtXMR(piconero) {
+      if (piconero === undefined || piconero === null) return "—";
+      return (piconero / 1e12).toFixed(6);
+    }
+
+    function App() {
+      const [stats, setStats] = useState(null);
+      const [feed, setFeed] = useState([]);
+      const [copied, setCopied] = useState(false);
+      const [lastPoll, setLastPoll] = useState(null);
+      const feedRef = useRef(null);
+      const intRef = useRef(null);
+
+      const addFeed = (msg, type = "info") => {
+        const time = new Date().toLocaleTimeString();
+        setFeed(p => [...p.slice(-30), { msg, type, time }]);
+      };
+
+      const poll = async () => {
+        addFeed("Polling pool API…", "info");
+        try {
+          const res = await fetch(API_URL);
+          if (!res.ok) throw new Error(`HTTP ${res.status}`);
+          const data = await res.json();
+          setStats(data);
+          setLastPoll(new Date());
+          addFeed(`Stats received — ${data.hash || 0} H/s, ${data.validShares || 0} valid shares`, "ok");
+        } catch (err) {
+          addFeed(`Poll failed: ${err.message} — view directly on pool site`, "err");
+        }
+      };
+
+      useEffect(() => {
+        poll();
+        intRef.current = setInterval(poll, 30000);
+        return () => clearInterval(intRef.current);
+      }, []);
+
+      useEffect(() => {
+        if (feedRef.current) feedRef.current.scrollTop = feedRef.current.scrollHeight;
+      }, [feed]);
+
+      const copyAddr = () => {
+        navigator.clipboard.writeText(WALLET);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+      };
+
+      const hasRealHash = stats && (stats.hash > 0 || stats.validShares > 0);
+
+      return (
+        <div className="app">
+          <div className="hdr">
+            <div className="logo">MOBILE<em>MINER</em> · LIVE</div>
+            <div className="live-dot">
+              <div className={`dot ${stats ? "on" : ""}`}/>
+              <span>{stats ? "CONNECTED" : "WAITING"}</span>
+            </div>
+          </div>
+
+          <div className="sec">
+            <div className="sec-hdr">Your Wallet</div>
+            <div className="sec-body">
+              <div className="addr-box">{WALLET}</div>
+              <div className="row-btns">
+                <div className={`mini-btn ${copied ? "copied" : ""}`} onClick={copyAddr}>
+                  {copied ? "✓ Copied" : "Copy Address"}
+                </div>
+                <a className="mini-btn" href={WALLET_URI}>Open Wallet</a>
+              </div>
+            </div>
+          </div>
+
+          <div className="sec">
+            <div className="sec-hdr">Live Pool Stats</div>
+            <div className="sec-body">
+              {!stats && (
+                <div className="empty-state">
+                  No data yet. This means the pool hasn't recorded a share from your miner, or the API blocked the request.<br/><br/>
+                  <a href={POOL_PAGE} target="_blank" rel="noreferrer">Check directly on MoneroOcean →</a>
+                </div>
+              )}
+              {stats && (
+                <>
+                  <div className="stats-grid">
+                    <div className="stat-box">
+                      <div className="stat-lbl">Hashrate</div>
+                      <div className="stat-val c-blue">{stats.hash || 0}<span className="stat-sub"> H/s</span></div>
+                    </div>
+                    <div className="stat-box">
+                      <div className="stat-lbl">Valid Shares</div>
+                      <div className="stat-val c-green">{stats.validShares || 0}</div>
+                    </div>
+                    <div className="stat-box">
+                      <div className="stat-lbl">Invalid Shares</div>
+                      <div className="stat-val c-warn">{stats.invalidShares || 0}</div>
+                    </div>
+                    <div className="stat-box">
+                      <div className="stat-lbl">Total Hashes</div>
+                      <div className="stat-val c-text">{stats.totalHashes ? Number(stats.totalHashes).toLocaleString() : 0}</div>
+                    </div>
+                  </div>
+                  <div className="pending-big">
+                    <div className="pending-num">{fmtXMR(stats.amtDue)}</div>
+                    <div className="pending-sub">XMR pending payout</div>
+                  </div>
+                  <div className="pending-sub" style={{textAlign:"center"}}>
+                    {fmtXMR(stats.amtPaid)} XMR paid out so far · {stats.txnCount || 0} payments
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+
+          <div className="sec">
+            <div className="sec-hdr">Live Feed</div>
+            <div className="sec-body" style={{padding:"10px 14px"}}>
+              <div className="feed-box" ref={feedRef}>
+                {feed.length === 0 && <div className="feed-entry"><span className="fe-info">Connecting to pool…</span></div>}
+                {feed.map((e, i) => (
+                  <div className="feed-entry" key={i}>
+                    <span className="feed-time">{e.time}</span>
+                    <span className={`fe-${e.type === "ok" ? "ok" : e.type === "err" ? "err" : "info"}`}>{e.msg}</span>
+                  </div>
+                ))}
+              </div>
+              <div className="refresh-lbl">
+                {lastPoll ? `Last updated ${lastPoll.toLocaleTimeString()} · refreshes every 30s` : "Refreshes every 30 seconds"}
+              </div>
+            </div>
+          </div>
+
+          <div className="footer-links">
+            <a className="foot-link" href={POOL_PAGE} target="_blank" rel="noreferrer">View Full Pool Page</a>
+            <a className="foot-link" href={WALLET_URI}>Open In Monero Wallet</a>
+            <a className="foot-link primary" href="https://www.kucoin.com/assets/deposit" target="_blank" rel="noreferrer">Open KuCoin →</a>
+          </div>
+        </div>
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+  </script>
+</body>
+</html>
