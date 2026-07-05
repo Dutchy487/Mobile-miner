@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+  <meta name="theme-color" content="#07090f"/>
+  <title>TradeAI — Crypto Analyst</title>
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    :root{
+      --bg:#07090f;--bg2:#0c1220;--bg3:#111b2d;
+      --border:#1b3354;--accent:#00cfff;--green:#00ff9d;
+      --warn:#ffaa00;--danger:#ff4455;--text:#c0daf0;--dim:#3d6080;
+      --mono:'Courier New',monospace;
+    }
+    body{background:var(--bg);color:var(--text);font-family:-apple-system,Roboto,Arial,sans-serif;}
+    .app{max-width:480px;margin:0 auto;padding-bottom:60px;}
+
+    /* HEADER */
+    .hdr{background:linear-gradient(180deg,#040609,var(--bg));border-bottom:1px solid var(--border);padding:16px 18px 12px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;}
+    .logo{font-family:var(--mono);font-size:13px;letter-spacing:2px;color:var(--accent);font-weight:700;}
+    .logo em{color:var(--green);font-style:normal;}
+    .update-time{font-family:var(--mono);font-size:9px;color:var(--dim);}
+
+    /* SECTIONS */
+    .sec{margin:14px 14px 0;background:var(--bg2);border:1px solid var(--border);border-radius:6px;overflow:hidden;}
+    .sec-hdr{background:var(--bg3);border-bottom:1px solid var(--border);padding:9px 14px;font-size:10px;letter-spacing:2px;color:var(--accent);text-transform:uppercase;font-family:var(--mono);font-weight:700;}
+    .sec-body{padding:14px;}
+
+    /* COIN CARDS */
+    .coin-card{background:var(--bg3);border:1px solid var(--border);border-radius:5px;padding:12px;margin-bottom:10px;}
+    .coin-card:last-child{margin-bottom:0;}
+    .coin-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;}
+    .coin-left{display:flex;align-items:center;gap:10px;}
+    .coin-icon{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;flex-shrink:0;}
+    .coin-name{font-size:15px;font-weight:700;}
+    .coin-sym{font-size:11px;color:var(--dim);font-family:var(--mono);}
+    .coin-price{text-align:right;}
+    .price-val{font-size:16px;font-weight:800;font-family:var(--mono);}
+    .price-chg{font-size:11px;font-family:var(--mono);margin-top:2px;}
+    .up{color:var(--green);} .down{color:var(--danger);}
+    .coin-stats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;}
+    .stat-mini{background:var(--bg);border-radius:3px;padding:6px 8px;}
+    .stat-mini-lbl{font-size:9px;color:var(--dim);font-family:var(--mono);text-transform:uppercase;letter-spacing:.5px;}
+    .stat-mini-val{font-size:12px;font-weight:700;font-family:var(--mono);margin-top:2px;}
+
+    /* SIGNAL BADGE */
+    .signal{display:inline-block;padding:3px 10px;border-radius:3px;font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;font-family:var(--mono);margin-top:8px;}
+    .sig-buy{background:rgba(0,255,157,.15);border:1px solid var(--green);color:var(--green);}
+    .sig-sell{background:rgba(255,68,85,.15);border:1px solid var(--danger);color:var(--danger);}
+    .sig-hold{background:rgba(255,170,0,.15);border:1px solid var(--warn);color:var(--warn);}
+    .sig-wait{background:rgba(61,96,128,.15);border:1px solid var(--dim);color:var(--dim);}
+
+    /* AI ANALYSIS */
+    .ai-box{background:rgba(0,207,255,.04);border:1px solid rgba(0,207,255,.15);border-radius:5px;padding:13px;margin-top:10px;}
+    .ai-tag{font-size:9px;font-family:var(--mono);color:var(--accent);letter-spacing:1.5px;display:block;margin-bottom:8px;text-transform:uppercase;}
+    .ai-text{font-size:13px;line-height:1.7;color:var(--text);}
+    .ai-loading{text-align:center;padding:20px;color:var(--dim);font-family:var(--mono);font-size:12px;}
+    .ai-error{color:var(--warn);font-size:12px;font-family:var(--mono);}
+
+    /* PLATFORM LINKS */
+    .platform-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+    .platform-btn{display:block;padding:12px;border-radius:5px;text-align:center;text-decoration:none;font-size:13px;font-weight:700;border:1px solid var(--border);color:var(--dim);transition:all .15s;}
+    .platform-btn.kucoin{border-color:#00a550;color:#00a550;background:rgba(0,165,80,.06);}
+    .platform-btn.bybit{border-color:#f7a600;color:#f7a600;background:rgba(247,166,0,.06);}
+    .platform-btn.binance{border-color:#f0b90b;color:#f0b90b;background:rgba(240,185,11,.06);}
+    .platform-btn.mexc{border-color:#00b0ff;color:#00b0ff;background:rgba(0,176,255,.06);}
+    .platform-name{font-size:14px;font-weight:800;}
+    .platform-sub{font-size:10px;font-family:var(--mono);margin-top:2px;opacity:.7;}
+
+    /* BUTTONS */
+    .btn{width:100%;padding:13px;border-radius:4px;border:none;font-size:15px;font-weight:800;letter-spacing:1px;cursor:pointer;text-transform:uppercase;transition:all .18s;margin-top:10px;}
+    .btn-primary{background:linear-gradient(135deg,#009fc4,#00cfff);color:#040609;}
+    .btn-primary:disabled{opacity:.4;cursor:not-allowed;}
+    .btn-ghost{background:transparent;border:1px solid var(--border);color:var(--dim);}
+
+    /* WATCHLIST */
+    .watchlist-input{width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:4px;color:var(--text);font-family:var(--mono);font-size:12px;padding:10px 12px;outline:none;transition:border .2s;}
+    .watchlist-input:focus{border-color:var(--accent);}
+    .watchlist-input::placeholder{color:var(--dim);}
+    .tag-list{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;}
+    .tag{background:var(--bg3);border:1px solid var(--border);border-radius:3px;padding:4px 10px;font-size:11px;font-family:var(--mono);color:var(--accent);display:flex;align-items:center;gap:6px;}
+    .tag-x{cursor:pointer;color:var(--danger);font-size:13px;}
+
+    /* SPINNER */
+    .spinner{display:inline-block;width:16px;height:16px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite;vertical-align:middle;margin-right:6px;}
+    @keyframes spin{to{transform:rotate(360deg)}}
+
+    /* DISCLAIMER */
+    .disclaimer{margin:14px 14px 0;padding:12px;background:rgba(255,170,0,.05);border:1px solid rgba(255,170,0,.2);border-radius:5px;font-size:11px;color:var(--warn);font-family:var(--mono);line-height:1.6;text-align:center;}
+
+    .irow{display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid rgba(27,51,84,.5);font-size:13px;}
+    .irow:last-child{border-bottom:none;}
+    .ikey{color:var(--dim);font-family:var(--mono);font-size:10px;letter-spacing:1px;text-transform:uppercase;}
+    .ival{color:var(--text);font-weight:600;font-family:var(--mono);font-size:12px;}
+
+    .empty{text-align:center;padding:30px 14px;color:var(--dim);font-family:var(--mono);font-size:12px;line-height:1.8;}
+  </style>
+</head>
+<body>
+<div class="app">
+
+  <div class="hdr">
+    <div class="logo">TRADE<em>AI</em> · ANALYST</div>
+    <div class="update-time" id="updateTime">Not loaded yet</div>
+  </div>
+
+  <div class="disclaimer">
+    ⚠ AI analysis is for informational purposes only. Not financial advice. Always do your own research before trading.
+  </div>
+
+  <!-- MARKET OVERVIEW -->
+  <div class="sec">
+    <div class="sec-hdr">Live Market Prices</div>
+    <div class="sec-body" id="marketBody">
+      <div class="empty">Tap "Analyse Market" below to load live prices and AI signals.</div>
+    </div>
+  </div>
+
+  <!-- AI ANALYSIS -->
+  <div class="sec">
+    <div class="sec-hdr">AI Trade Analysis</div>
+    <div class="sec-body">
+      <div id="aiBody" class="empty">AI analysis will appear here after loading market data.</div>
+      <button class="btn btn-primary" id="analyseBtn" onclick="runAnalysis()">
+        ⚡ Analyse Market
+      </button>
+      <button class="btn btn-ghost" id="refreshBtn" onclick="refreshPrices()" style="display:none;margin-top:8px;">
+        ↻ Refresh Prices
+      </button>
+    </div>
+  </div>
+
+  <!-- PLATFORMS -->
+  <div class="sec">
+    <div class="sec-hdr">Trade On Your Platforms</div>
+    <div class="sec-body">
+      <div class="platform-grid">
+        <a class="platform-btn kucoin" href="https://www.kucoin.com/trade" target="_blank" rel="noreferrer">
+          <div class="platform-name">KuCoin</div>
+          <div class="platform-sub">Spot Trading →</div>
+        </a>
+        <a class="platform-btn bybit" href="https://www.bybit.com/en/trade/spot" target="_blank" rel="noreferrer">
+          <div class="platform-name">Bybit</div>
+          <div class="platform-sub">Spot Trading →</div>
+        </a>
+        <a class="platform-btn binance" href="https://www.binance.com/en/trade" target="_blank" rel="noreferrer">
+          <div class="platform-name">Binance</div>
+          <div class="platform-sub">Spot Trading →</div>
+        </a>
+        <a class="platform-btn mexc" href="https://www.mexc.com/exchange" target="_blank" rel="noreferrer">
+          <div class="platform-name">MEXC</div>
+          <div class="platform-sub">Spot Trading →</div>
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- MARKET STATS -->
+  <div class="sec" id="marketStatsSec" style="display:none">
+    <div class="sec-hdr">Market Overview</div>
+    <div class="sec-body" id="marketStats"></div>
+  </div>
+
+</div>
+
+<script>
+  var COINS = [
+    {id:"bitcoin",sym:"BTC",name:"Bitcoin",color:"#f7931a",emoji:"₿"},
+    {id:"ethereum",sym:"ETH",name:"Ethereum",color:"#627eea",emoji:"Ξ"},
+    {id:"monero",sym:"XMR",name:"Monero",color:"#ff6600",emoji:"ɱ"},
+    {id:"solana",sym:"SOL",name:"Solana",color:"#9945ff",emoji:"◎"},
+    {id:"binancecoin",sym:"BNB",name:"BNB",color:"#f0b90b",emoji:"B"},
+    {id:"ripple",sym:"XRP",name:"XRP",color:"#00aae4",emoji:"✕"},
+    {id:"cardano",sym:"ADA",name:"Cardano",color:"#0033ad",emoji:"₳"},
+    {id:"dogecoin",sym:"DOGE",name:"Dogecoin",color:"#c2a633",emoji:"Ð"}
+  ];
+
+  var marketData = null;
+  var analysisRunning = false;
+
+  function fmt(n){
+    if(n>=1000000000) return "$"+(n/1000000000).toFixed(2)+"B";
+    if(n>=1000000) return "$"+(n/1000000).toFixed(2)+"M";
+    if(n>=1000) return "$"+(n/1000).toFixed(2)+"K";
+    if(n>=1) return "$"+n.toFixed(2);
+    return "$"+n.toFixed(6);
+  }
+
+  function fmtChg(n){
+    var sign = n>=0?"+":"";
+    return sign+n.toFixed(2)+"%";
+  }
+
+  function signalFromChange(chg24, chg7){
+    if(chg24 > 5 && chg7 > 10) return {cls:"sig-buy",txt:"BUY SIGNAL"};
+    if(chg24 < -5 && chg7 < -10) return {cls:"sig-sell",txt:"SELL / AVOID"};
+    if(chg24 > 2) return {cls:"sig-buy",txt:"BULLISH"};
+    if(chg24 < -2) return {cls:"sig-sell",txt:"BEARISH"};
+    if(Math.abs(chg24) < 1) return {cls:"sig-hold",txt:"HOLD / NEUTRAL"};
+    return {cls:"sig-wait",txt:"WATCH"};
+  }
+
+  async function refreshPrices(){
+    document.getElementById("updateTime").textContent = "Loading...";
+    var ids = COINS.map(c=>c.id).join(",");
+    var url = "https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&ids="+ids+"&order=market_cap_desc&sparkline=false&price_change_percentage=7d";
+    try {
+      var res = await fetch(url);
+      if(!res.ok) throw new Error("HTTP "+res.status);
+      var data = await res.json();
+      marketData = data;
+      renderMarket(data);
+      document.getElementById("updateTime").textContent = "Updated "+new Date().toLocaleTimeString();
+      document.getElementById("refreshBtn").style.display="block";
+      renderMarketStats(data);
+    } catch(e){
+      document.getElementById("marketBody").innerHTML =
+        '<div class="empty">Could not load prices: '+e.message+'<br>Check your internet connection and try again.</div>';
+    }
+  }
+
+  function renderMarket(data){
+    var html = "";
+    data.forEach(function(coin){
+      var meta = COINS.find(c=>c.id===coin.id) || {emoji:"○",color:"#888"};
+      var chg24 = coin.price_change_percentage_24h || 0;
+      var chg7 = coin.price_change_percentage_7d_in_currency || 0;
+      var sig = signalFromChange(chg24, chg7);
+      html += '<div class="coin-card">';
+      html += '<div class="coin-top">';
+      html += '<div class="coin-left">';
+      html += '<div class="coin-icon" style="background:'+meta.color+'22;color:'+meta.color+'">'+meta.emoji+'</div>';
+      html += '<div><div class="coin-name">'+coin.name+'</div><div class="coin-sym">'+coin.symbol.toUpperCase()+'</div></div>';
+      html += '</div>';
+      html += '<div class="coin-price">';
+      html += '<div class="price-val">'+fmt(coin.current_price)+'</div>';
+      html += '<div class="price-chg '+(chg24>=0?"up":"down")+'">'+fmtChg(chg24)+' 24h</div>';
+      html += '</div></div>';
+      html += '<div class="coin-stats">';
+      html += '<div class="stat-mini"><div class="stat-mini-lbl">7d</div><div class="stat-mini-val '+(chg7>=0?"up":"down")+'">'+fmtChg(chg7)+'</div></div>';
+      html += '<div class="stat-mini"><div class="stat-mini-lbl">Mkt Cap</div><div class="stat-mini-val">'+fmt(coin.market_cap)+'</div></div>';
+      html += '<div class="stat-mini"><div class="stat-mini-lbl">Volume</div><div class="stat-mini-val">'+fmt(coin.total_volume)+'</div></div>';
+      html += '</div>';
+      html += '<span class="signal '+sig.cls+'">'+sig.txt+'</span>';
+      html += '</div>';
+    });
+    document.getElementById("marketBody").innerHTML = html;
+  }
+
+  function renderMarketStats(data){
+    var totalMktCap = data.reduce(function(a,c){return a+(c.market_cap||0);},0);
+    var gainers = data.filter(function(c){return (c.price_change_percentage_24h||0)>0;}).length;
+    var losers = data.length - gainers;
+    var best = data.reduce(function(a,c){return (c.price_change_percentage_24h||0)>(a.price_change_percentage_24h||0)?c:a;});
+    var worst = data.reduce(function(a,c){return (c.price_change_percentage_24h||0)<(a.price_change_percentage_24h||0)?c:a;});
+    var html = '';
+    html += '<div class="irow"><span class="ikey">Combined Mkt Cap</span><span class="ival">'+fmt(totalMktCap)+'</span></div>';
+    html += '<div class="irow"><span class="ikey">Gainers / Losers</span><span class="ival"><span class="up">'+gainers+' ↑</span> / <span class="down">'+losers+' ↓</span></span></div>';
+    html += '<div class="irow"><span class="ikey">Best 24h</span><span class="ival up">'+best.symbol.toUpperCase()+' '+fmtChg(best.price_change_percentage_24h||0)+'</span></div>';
+    html += '<div class="irow"><span class="ikey">Worst 24h</span><span class="ival down">'+worst.symbol.toUpperCase()+' '+fmtChg(worst.price_change_percentage_24h||0)+'</span></div>';
+    document.getElementById("marketStats").innerHTML = html;
+    document.getElementById("marketStatsSec").style.display="block";
+  }
+
+  async function runAnalysis(){
+    if(analysisRunning) return;
+    analysisRunning = true;
+    var btn = document.getElementById("analyseBtn");
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner"></span> Loading...';
+
+    // Fetch prices first if not loaded
+    if(!marketData){
+      await refreshPrices();
+    }
+
+    if(!marketData){
+      document.getElementById("aiBody").innerHTML = '<div class="ai-error">Could not load market data. Check your internet and try again.</div>';
+      btn.disabled = false;
+      btn.innerHTML = '⚡ Analyse Market';
+      analysisRunning = false;
+      return;
+    }
+
+    btn.innerHTML = '<span class="spinner"></span> AI Analysing...';
+    document.getElementById("aiBody").innerHTML = '<div class="ai-loading"><span class="spinner"></span> AI is analysing market conditions...</div>';
+
+    // Build market summary for AI
+    var summary = marketData.map(function(c){
+      return c.symbol.toUpperCase()+": $"+c.current_price.toFixed(2)+
+        " | 24h: "+(c.price_change_percentage_24h||0).toFixed(2)+"%"+
+        " | 7d: "+(c.price_change_percentage_7d_in_currency||0).toFixed(2)+"%"+
+        " | Vol: $"+(c.total_volume/1000000).toFixed(0)+"M"+
+        " | MCap: $"+(c.market_cap/1000000000).toFixed(2)+"B";
+    }).join("\n");
+
+    try {
+      var res = await fetch("https://api.anthropic.com/v1/messages",{
+        method:"POST",
+        headers:{"Content-Type":"application/json"},
+        body: JSON.stringify({
+          model:"claude-sonnet-4-20250514",
+          max_tokens:1000,
+          messages:[{
+            role:"user",
+            content:"You are a crypto market analyst. Analyze this live market data and give practical trading insights.\n\nLIVE MARKET DATA:\n"+summary+"\n\nProvide:\n1. Overall market sentiment (bullish/bearish/neutral) with reasoning\n2. Top 2-3 coins showing strongest buy opportunity right now and why\n3. Any coins to avoid or sell right now and why\n4. One specific trade idea with entry point, target, and risk note\n5. Key risk factor to watch this week\n\nBe direct, practical, and specific. Use the actual price data provided. Keep it concise — this is for a mobile trader. Do not give generic advice."
+          }]
+        })
+      });
+      var d = await res.json();
+      var text = d.content && d.content[0] && d.content[0].text ? d.content[0].text : "Analysis unavailable.";
+
+      document.getElementById("aiBody").innerHTML =
+        '<div class="ai-box"><span class="ai-tag">AI MARKET ANALYSIS — '+new Date().toLocaleTimeString()+'</span><div class="ai-text">'+text.replace(/\n/g,"<br>")+'</div></div>';
+
+    } catch(e){
+      document.getElementById("aiBody").innerHTML =
+        '<div class="ai-error">AI analysis failed: '+e.message+'<br>Market prices are still shown above.</div>';
+    }
+
+    btn.disabled = false;
+    btn.innerHTML = '⚡ Re-Analyse Market';
+    analysisRunning = false;
+  }
+</script>
+</body>
+</html>
